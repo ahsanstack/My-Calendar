@@ -113,3 +113,112 @@ todayBtn.onclick = () => {
   currentDate = new Date();
   renderCalendar();
 };
+
+// Modal Elements
+const eventModal = document.getElementById("eventModal");
+const openModalBtn = document.getElementById("openModalBtn");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const eventForm = document.getElementById("eventForm");
+const deleteEventBtn = document.getElementById("deleteEventBtn");
+const darkModeToggle = document.getElementById("darkModeToggle");
+const searchInput = document.getElementById("searchInput");
+
+// LocalStorage & Stats
+function saveEvents() {
+  localStorage.setItem("mycalendar_events", JSON.stringify(events));
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById("statTotal").textContent = events.length;
+  const currentMonthPrefix = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
+  const monthCount = events.filter((e) =>
+    e.date.startsWith(currentMonthPrefix),
+  ).length;
+  document.getElementById("statMonth").textContent = monthCount;
+}
+
+// Modal Handlers
+function openModal(evt = null) {
+  document.getElementById("eventId").value = evt?.id || "";
+  document.getElementById("eventTitle").value = evt?.title || "";
+  document.getElementById("eventDate").value =
+    evt?.date || new Date().toISOString().split("T")[0];
+  document.getElementById("eventColor").value = evt?.color || "blue";
+
+  if (evt?.id) {
+    document.getElementById("modalTitle").textContent = "Edit Event";
+    deleteEventBtn.classList.remove("hidden");
+  } else {
+    document.getElementById("modalTitle").textContent = "Add Event";
+    deleteEventBtn.classList.add("hidden");
+  }
+
+  eventModal.classList.remove("hidden");
+}
+
+function closeModal() {
+  eventModal.classList.add("hidden");
+  eventForm.reset();
+}
+
+// --- Dark Mode Toggle ---
+
+// Initialize theme on load
+if (
+  localStorage.getItem("mycalendar_theme") === "dark" ||
+  (!("mycalendar_theme" in localStorage) &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches)
+) {
+  document.documentElement.classList.add("dark");
+} else {
+  document.documentElement.classList.remove("dark");
+}
+
+// Click Handler
+darkModeToggle.addEventListener("click", () => {
+  document.documentElement.classList.toggle("dark");
+  const isDark = document.documentElement.classList.contains("dark");
+  localStorage.setItem("mycalendar_theme", isDark ? "dark" : "light");
+});
+
+// Live Search Input
+searchInput.oninput = (e) => {
+  searchQuery = e.target.value;
+  renderCalendar();
+};
+
+// Event Listeners
+openModalBtn.onclick = () => openModal();
+closeModalBtn.onclick = closeModal;
+
+eventForm.onsubmit = (e) => {
+  e.preventDefault();
+  const id = document.getElementById("eventId").value;
+  const title = document.getElementById("eventTitle").value;
+  const date = document.getElementById("eventDate").value;
+  const color = document.getElementById("eventColor").value;
+
+  if (id) {
+    events = events.map((evt) =>
+      evt.id === id ? { id, title, date, color } : evt,
+    );
+  } else {
+    events.push({ id: Date.now().toString(), title, date, color });
+  }
+
+  saveEvents();
+  renderCalendar();
+  closeModal();
+};
+
+deleteEventBtn.onclick = () => {
+  const id = document.getElementById("eventId").value;
+  events = events.filter((evt) => evt.id !== id);
+  saveEvents();
+  renderCalendar();
+  closeModal();
+};
+
+// Initialize
+renderCalendar();
