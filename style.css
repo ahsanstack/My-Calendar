@@ -26,7 +26,7 @@
   }
 }
 
-/* Prevent SVG children from interfering with button click handlers */
+/* Fix SVG click interference on buttons */
 button svg {
   pointer-events: none;
 }
